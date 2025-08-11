@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高鈉食物與健康影響</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is structured into four thematic sections to guide the user from understanding the problem to finding solutions. 1) "Why it matters": Explains the core problem of sodium and blood pressure with an interactive visualization. 2) "Hidden Sodium": An interactive food explorer with a dynamic chart to compare sodium in common foods. 3) "Hot Pot Trap": A practical, interactive calculator to demonstrate sodium stacking. 4) "Smart Choices": Actionable tips for a low-sodium diet. This non-linear, task-oriented structure is chosen over a linear slide format to encourage exploration and provide practical tools, making the health information more engaging and memorable for the user. -->
+    <!-- Visualization & Content Choices: 1) Sodium & Blood Pressure (Goal: Inform) -> Interactive water tank/pressure gauge (HTML/CSS/JS) -> User slides to see direct effect -> More engaging than a static image. 2) Food Sodium Comparison (Goal: Compare) -> Bar Chart (Chart.js) -> User clicks food categories to update chart -> Excellent for visual comparison against daily limits. 3) Hot Pot Sodium Stacking (Goal: Inform/Engage) -> Interactive Calculator with dynamic gauge (JS/Chart.js) -> User selects items to see cumulative sodium -> Turns a passive concept into a personalized, practical tool. 4) Common High-Sodium Foods (Goal: Organize) -> Interactive cards (HTML/Tailwind/JS) -> User clicks to reveal info -> Keeps UI clean and focused. All choices prioritize interaction and clarity to enhance learning. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #C06C59;
+            border-bottom-color: #C06C59;
+        }
+        .btn-primary {
+            background-color: #C06C59;
+            color: #FFFFFF;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #A95C4F;
+        }
+        .card {
+            background-color: #FFFFFF;
+            border: 1px solid #F0EBE3;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -2px rgb(0 0 0 / 0.07);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="text-xl font-bold text-gray-800">鈉・健康識</div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#section1" class="nav-link pb-1">鈉與血壓</a>
+                <a href="#section2" class="nav-link pb-1">高鈉陷阱</a>
+                <a href="#section3" class="nav-link pb-1">火鍋危機</a>
+                <a href="#section4" class="nav-link pb-1">健康飲食</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="text-center py-16 md:py-24 px-6 bg-amber-50">
+            <div class="container mx-auto">
+                <h1 class="text-3xl md:text-5xl font-bold text-gray-800 mb-4">高鈉食物與健康影響</h1>
+                <p class="text-lg md:text-xl text-gray-600 mb-8">守護血壓，遠離中風風險</p>
+                <p class="text-lg text-gray-700 mb-12">大家知道腦中風的最大危險因子是什麼嗎？<br>答案是：<span class="font-bold text-2xl text-[#C06C59]">高血壓</span></p>
+                <a href="#section1" class="btn-primary font-bold py-3 px-8 rounded-full">開始探索</a>
+            </div>
+        </section>
+
+        <section id="section1" class="py-16 md:py-20 px-6">
+            <div class="container mx-auto text-center">
+                <h2 class="text-2xl md:text-3xl font-bold mb-4">為什麼要少鹽？鈉與血壓的關係</h2>
+                <p class="max-w-3xl mx-auto text-gray-600 mb-12">鹽中的「鈉」會讓身體留住更多水分，導致血管內的液體量增加，就像往水管裡灌入更多的水，管壁承受的壓力自然會變大，這就是高血壓。讓我們透過下方的互動裝置，看看鈉是如何影響血壓的。</p>
+                
+                <div class="w-full max-w-lg mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+                    <div class="flex justify-between items-end gap-4">
+                        <div class="w-2/3">
+                            <p class="text-left font-semibold mb-2">血管壓力模擬</p>
+                            <div id="pressure-vessel" class="w-full h-64 bg-blue-100 rounded-lg border-4 border-blue-300 relative overflow-hidden">
+                                <div id="water-level" class="absolute bottom-0 left-0 right-0 bg-blue-500 transition-all duration-500" style="height: 10%;"></div>
+                            </div>
+                        </div>
+                        <div class="w-1/3">
+                            <p class="text-center font-semibold mb-2">血壓計</p>
+                            <div class="bg-gray-100 h-64 rounded-lg flex items-center justify-center relative">
+                                <div class="w-32 h-32 rounded-full bg-white border-4 border-gray-300 relative">
+                                    <div id="pressure-needle" class="w-1 h-12 bg-red-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full origin-bottom transition-transform duration-500" style="transform: translateX(-50%) translateY(-100%) rotate(-60deg);"></div>
+                                    <div class="absolute top-1/2 left-1/2 w-4 h-4 bg-gray-700 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                                    <span class="absolute top-1 left-1/2 -translate-x-1/2 text-xs">高</span>
+                                    <span class="absolute bottom-1 left-1/2 -translate-x-1/2 text-xs">低</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <label for="sodium-slider" class="font-semibold">調整鈉攝取量</label>
+                        <input id="sodium-slider" type="range" min="0" max="100" value="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section2" class="py-16 md:py-20 px-6 bg-amber-50">
+            <div class="container mx-auto">
+                <h2 class="text-2xl md:text-3xl font-bold text-center mb-4">高鈉食物在哪裡？找出隱藏的陷阱</h2>
+                <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12">許多食物嚐起來不鹹，鈉含量卻非常驚人！這是因為鹽分常被其他調味料或水分稀釋，讓我們的味覺被蒙騙。點擊下方食物類別，看看常見的「高鈉陷阱」有哪些。</p>
+                
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 mb-12" id="food-categories">
+                </div>
+
+                <div class="card p-4 md:p-8">
+                    <p class="text-center mb-4 font-semibold">常見食物鈉含量比較 (衛福部建議每日鈉攝取量為2400毫克)</p>
+                    <div class="chart-container">
+                        <canvas id="sodiumChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section3" class="py-16 md:py-20 px-6">
+            <div class="container mx-auto">
+                <h2 class="text-2xl md:text-3xl font-bold text-center mb-4">火鍋的鈉量危機</h2>
+                <p class="max-w-3xl mx-auto text-center text-gray-600 mb-12">火鍋是高鈉的重災區，從湯底、加工火鍋料到沾醬，每一口都在疊加鈉含量。試試下方的計算機，了解一頓火鍋可能會吃下多少鈉，親身體驗鈉量堆疊的驚人效果。</p>
+
+                <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+                    <div class="card p-8">
+                        <h3 class="font-bold text-lg mb-4 text-center">我的火鍋鈉含量計算</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="font-semibold">1. 選擇湯底 (一碗約200ml)</label>
+                                <select id="soup-base" class="w-full mt-1 p-2 border rounded-md bg-white">
+                                    <option value="400">豚骨湯 (約 400mg 鈉)</option>
+                                    <option value="800">麻辣湯 (約 800mg 鈉)</option>
+                                    <option value="600">酸菜白肉湯 (約 600mg 鈉)</option>
+                                    <option value="150">昆布清湯 (約 150mg 鈉)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="font-semibold">2. 選擇火鍋料 (5-6顆)</label>
+                                <select id="hotpot-items" class="w-full mt-1 p-2 border rounded-md bg-white">
+                                    <option value="300">貢丸/燕餃 (約 300mg 鈉)</option>
+                                    <option value="500">魚卵捲/起司球 (約 500mg 鈉)</option>
+                                    <option value="400">豆腐/豆皮 (約 400mg 鈉)</option>
+                                    <option value="50">新鮮肉片 (約 50mg 鈉)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="font-semibold">3. 選擇沾醬 (一碟)</label>
+                                <select id="sauce" class="w-full mt-1 p-2 border rounded-md bg-white">
+                                    <option value="750">沙茶醬 (約 750mg 鈉)</option>
+                                    <option value="500">豆瓣醬 (約 500mg 鈉)</option>
+                                    <option value="800">醬油 (約 800mg 鈉)</option>
+                                    <option value="100">蔥薑蒜+醋 (約 100mg 鈉)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <p class="font-semibold text-lg mb-2">預估鈉攝取總量</p>
+                        <div class="relative w-48 h-48 mx-auto">
+                            <canvas id="sodiumGauge"></canvas>
+                            <div id="total-sodium" class="absolute inset-0 flex flex-col items-center justify-center font-bold">
+                                <span class="text-4xl text-[#C06C59]">0</span>
+                                <span class="text-gray-600">毫克</span>
+                            </div>
+                        </div>
+                        <p class="mt-4 text-gray-600">每日建議攝取量: 2400毫克</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="section4" class="py-16 md:py-20 px-6 bg-amber-50">
+            <div class="container mx-auto">
+                <h2 class="text-2xl md:text-3xl font-bold text-center mb-12">健康飲食的實用建議</h2>
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="card p-6 text-center">
+                        <div class="text-4xl mb-4">🌿</div>
+                        <h3 class="font-bold text-lg mb-2">多吃原型食物</h3>
+                        <p class="text-gray-600">多選擇新鮮蔬菜、水果和未加工的肉類，減少食用加工肉品、罐頭和醃製品。</p>
+                    </div>
+                    <div class="card p-6 text-center">
+                        <div class="text-4xl mb-4">🥣</div>
+                        <h3 class="font-bold text-lg mb-2">火鍋聰明吃</h3>
+                        <p class="text-gray-600">盡量少喝湯，特別是煮過肉和火鍋料的湯底。多用蔥、薑、蒜、醋等天然辛香料自製沾醬。</p>
+                    </div>
+                    <div class="card p-6 text-center">
+                        <div class="text-4xl mb-4">🧂</div>
+                        <h3 class="font-bold text-lg mb-2">檢查營養標示</h3>
+                        <p class="text-gray-600">購買包裝食品時，學會看營養標示上的「鈉」含量，選擇鈉含量較低的產品。</p>
+                    </div>
+                    <div class="card p-6 text-center">
+                        <div class="text-4xl mb-4">🩺</div>
+                        <h3 class="font-bold text-lg mb-2">定期量血壓</h3>
+                        <p class="text-gray-600">養成定期量血壓的習慣，了解自己的健康狀況，是預防心血管疾病的第一步。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8 px-6">
+        <div class="container mx-auto text-center">
+            <p>"大家一起努力，守護自己的血壓，遠離中風危機！"</p>
+            <p class="text-sm mt-2 text-gray-400">衛教資訊僅供參考，若有健康問題請諮詢專業醫師。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const foodData = {
+                "醬料與調味料": [
+                    { name: "醬油 (1湯匙)", sodium: 800 },
+                    { name: "沙茶醬 (1碟)", sodium: 750 },
+                    { name: "辣椒醬 (1碟)", sodium: 650 },
+                ],
+                "加工與發酵品": [
+                    { name: "香腸 (1條)", sodium: 600 },
+                    { name: "泡菜 (100g)", sodium: 850 },
+                    { name: "味噌 (1湯匙)", sodium: 500 },
+                    { name: "魚鬆 (2湯匙)", sodium: 400 },
+                ],
+                "麵食與速食": [
+                    { name: "泡麵 (1碗含調味包)", sodium: 2200 },
+                    { name: "鹹餅乾 (1小包)", sodium: 450 },
+                    { name: "滷肉飯 (1碗)", sodium: 1100 },
+                ],
+                "火鍋料": [
+                    { name: "麻辣湯底 (1碗)", sodium: 800 },
+                    { name: "貢丸 (3顆)", sodium: 350 },
+                    { name: "魚餃 (5顆)", sodium: 280 },
+                ],
+                 "長輩常見": [
+                    { name: "鹹菜 (1碟)", sodium: 900 },
+                    { name: "豆腐乳 (1塊)", sodium: 400 },
+                    { name: "魷魚絲 (1小把)", sodium: 550 },
+                ]
+            };
+
+            let sodiumChart;
+            let gaugeChart;
+
+            function createSodiumChart(initialCategory) {
+                const ctx = document.getElementById('sodiumChart').getContext('2d');
+                const data = foodData[initialCategory];
+                
+                const chartData = {
+                    labels: data.map(item => item.name),
+                    datasets: [{
+                        label: '鈉含量 (毫克)',
+                        data: data.map(item => item.sodium),
+                        backgroundColor: '#F5B041',
+                        borderColor: '#AF7AC5',
+                        borderWidth: 0,
+                        borderRadius: 5,
+                    },
+                    {
+                        label: '每日建議量',
+                        data: Array(data.length).fill(2400),
+                        type: 'line',
+                        borderColor: '#E74C3C',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false,
+                        borderDash: [5, 5],
+                    }]
+                };
+
+                sodiumChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: chartData,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: '鈉含量 (mg)'
+                                }
+                            },
+                            y: {
+                                ticks: {
+                                    autoSkip: false,
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `鈉含量: ${context.raw} mg`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function updateSodiumChart(category) {
+                const data = foodData[category];
+                sodiumChart.data.labels = data.map(item => item.name);
+                sodiumChart.data.datasets[0].data = data.map(item => item.sodium);
+                sodiumChart.data.datasets[1].data = Array(data.length).fill(2400);
+                sodiumChart.update();
+            }
+
+            function setupFoodCategories() {
+                const container = document.getElementById('food-categories');
+                Object.keys(foodData).forEach((category, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = category;
+                    button.className = 'p-3 rounded-lg text-center font-semibold transition-colors duration-300';
+                    if (index === 0) {
+                        button.classList.add('bg-[#C06C59]', 'text-white');
+                    } else {
+                        button.classList.add('bg-white', 'text-gray-700', 'hover:bg-amber-100');
+                    }
+                    button.onclick = () => {
+                        updateSodiumChart(category);
+                        document.querySelectorAll('#food-categories button').forEach(btn => {
+                            btn.classList.remove('bg-[#C06C59]', 'text-white');
+                            btn.classList.add('bg-white', 'text-gray-700', 'hover:bg-amber-100');
+                        });
+                        button.classList.add('bg-[#C06C59]', 'text-white');
+                        button.classList.remove('bg-white', 'text-gray-700', 'hover:bg-amber-100');
+                    };
+                    container.appendChild(button);
+                });
+            }
+            
+            function handlePressureSlider() {
+                const slider = document.getElementById('sodium-slider');
+                const waterLevel = document.getElementById('water-level');
+                const needle = document.getElementById('pressure-needle');
+
+                slider.addEventListener('input', (e) => {
+                    const value = e.target.value;
+                    const waterHeight = value;
+                    const needleRotation = -60 + (value * 1.2); 
+                    waterLevel.style.height = `${waterHeight}%`;
+                    needle.style.transform = `translateX(-50%) translateY(-100%) rotate(${needleRotation}deg)`;
+                });
+            }
+
+            function createGaugeChart() {
+                const ctx = document.getElementById('sodiumGauge').getContext('2d');
+                const data = {
+                    datasets: [{
+                        data: [0, 2400],
+                        backgroundColor: ['#C06C59', '#EAEAEA'],
+                        borderWidth: 0,
+                        circumference: 270,
+                        rotation: 225,
+                    }]
+                };
+                gaugeChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        cutout: '80%',
+                        plugins: {
+                            tooltip: { enabled: false }
+                        }
+                    }
+                });
+            }
+
+            function updateHotpotCalculator() {
+                const soupEl = document.getElementById('soup-base');
+                const itemsEl = document.getElementById('hotpot-items');
+                const sauceEl = document.getElementById('sauce');
+                const totalSodiumEl = document.getElementById('total-sodium').querySelector('span');
+
+                function calculate() {
+                    const soupSodium = parseInt(soupEl.value);
+                    const itemsSodium = parseInt(itemsEl.value);
+                    const sauceSodium = parseInt(sauceEl.value);
+                    const total = soupSodium + itemsSodium + sauceSodium;
+                    
+                    totalSodiumEl.textContent = total;
+                    
+                    const percentage = Math.min((total / 2400) * 100, 100);
+                    gaugeChart.data.datasets[0].data[0] = total;
+                    gaugeChart.data.datasets[0].data[1] = Math.max(0, 2400 - total);
+                    gaugeChart.update();
+                }
+
+                soupEl.addEventListener('change', calculate);
+                itemsEl.addEventListener('change', calculate);
+                sauceEl.addEventListener('change', calculate);
+                
+                calculate();
+            }
+
+            function setupSmoothScrolling() {
+                document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                    anchor.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        document.querySelector(this.getAttribute('href')).scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    });
+                });
+            }
+
+            setupFoodCategories();
+            createSodiumChart(Object.keys(foodData)[0]);
+            handlePressureSlider();
+            createGaugeChart();
+            updateHotpotCalculator();
+            setupSmoothScrolling();
+        });
+    </script>
+</body>
+</html>
